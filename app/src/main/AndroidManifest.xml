@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.macauto.macautoapp_android">
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.READ_CALENDAR"/>
+    <uses-permission android:name="android.permission.WRITE_CALENDAR"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AppCompat.Light">
+
+        <receiver android:enabled="true" android:name=".Receiver.Receive_BootCompleted">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="com.macauto.MacautoApp.GetStartAlarmServiceAction" />
+
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name=".Meeting.Data.NotificationPublisher">
+
+        </receiver>
+
+        <activity android:name=".MainActivity"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service android:name=".Meeting.Service.GetPersonMeetingService"></service>
+        <service android:name=".Meeting.Service.GetAllMeetingService"></service>
+        <service android:name=".Meeting.Service.GetJobService"></service>
+        <service android:name=".Meeting.Service.LoginCheckService"></service>
+        <service android:name=".Meeting.Service.AlarmService"></service>
+
+
+
+        <activity android:name=".Meeting.Login"></activity>
+        <activity android:name=".Meeting.MainMenu"></activity>
+        <activity android:name=".Meeting.MeetingShow"></activity>
+        <activity android:name=".Meeting.JobShow"></activity>
+        <activity android:name=".Meeting.MeetingAlarm"></activity>
+        <activity android:name=".Meeting.SetupRequestJob"></activity>
+        <activity android:name=".Meeting.SetupRequestMeeting"></activity>
+        <activity android:name=".Meeting.ErrorTimer"></activity>
+
+        <activity android:name=".TopMenu"></activity>
+
+    </application>
+
+</manifest>

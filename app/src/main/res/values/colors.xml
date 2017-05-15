@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="black">#000000</color>
+
+    <color name="menuTextWhite">#FFFFFF</color>
+
+    <!-- bear theme -->
+    <color name="status_bar_color_menu_bear">#796d2b</color>
+    <color name="status_bar_color_inside_bear">#39455d</color>
+    <color name="main_menu_background_bear">#ece9d8</color>
+    <color name="main_menu_text_color_bear">#333333</color>
+    <color name="action_bar_background_bear">#728aba</color>
+    <color name="action_bar_text_bear">#efefef</color>
+    <color name="overflow_background_bear">#7176a9</color>
+    <color name="overflow_text_bear">#efefef</color>
+    <color name="overflow_divider_bear">#efefef</color>
+    <color name="inside_main_background_bear">#ffffff</color>
+    <color name="inside_select_background_bear">#90aadc</color>
+    <color name="inside_item_text_bear">#333333</color>
+    <color name="lock_and_touch_status_bar_bear">#796d2b</color>
+    <color name="lock_and_touch_background_bear">#feda56</color>
+    <color name="lock_and_touch_text_bear">#333333</color>
+
+
+</resources>

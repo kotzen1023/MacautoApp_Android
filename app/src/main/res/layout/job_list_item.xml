@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:gravity="center_vertical"
+        android:layout_weight="1">
+
+        <TextView
+            android:id="@+id/department"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Department"
+            android:layout_weight="1"
+           />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Response"
+            android:id="@+id/response"
+            android:paddingLeft="10dp"
+
+            android:layout_toRightOf="@+id/department"
+            android:layout_toEndOf="@+id/department" />
+
+        <TextView
+            android:id="@+id/decisionHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Decision"
+            android:maxLines="1"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:gravity="fill_vertical"
+            android:layout_below="@+id/department">
+        </TextView>
+
+        <TextView
+            android:id="@+id/estimatedDateHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Estimated Time"
+            android:textSize="20sp"
+            android:layout_alignParentLeft="true"
+            android:gravity="fill_vertical"
+            android:layout_below="@id/decisionHeader">
+        </TextView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="date"
+            android:textSize="20sp"
+            android:id="@+id/estimatedTime"
+            android:paddingLeft="5dp"
+            android:layout_below="@+id/decisionHeader"
+            android:layout_toRightOf="@+id/estimatedDateHeader"
+            android:layout_toEndOf="@+id/estimatedDateHeader" />
+
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Delay Day"
+            android:id="@+id/delayStat"
+            android:layout_weight="1"
+            android:layout_below="@+id/estimatedDateHeader"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            />
+
+        <!--TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Delay"
+            android:id="@+id/delayHeader"
+            android:layout_below="@+id/estimatedDateHeader"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" /-->
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/imageDelay"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true" />
+
+
+    </RelativeLayout>
+
+
+</LinearLayout>
