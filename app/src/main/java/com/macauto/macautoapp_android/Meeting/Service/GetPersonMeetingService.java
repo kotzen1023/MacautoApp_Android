@@ -7,6 +7,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -40,15 +41,23 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.LongBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.TimeZone;
+
+import static com.macauto.macautoapp_android.Meeting.Data.InitData.alarmList;
+import static com.macauto.macautoapp_android.Meeting.Data.InitData.calendarEventsList;
+import static com.macauto.macautoapp_android.Meeting.Data.InitData.calendarRemindersList;
+
 
 
 public class GetPersonMeetingService extends IntentService {
@@ -90,6 +99,7 @@ public class GetPersonMeetingService extends IntentService {
         name = pref.getString("NAME", "");
         alarm_interval = pref.getInt("ALARM_INTERVAL", 30);
         sync_option = pref.getInt("SYNC_SETTING", 0);
+        editor = pref.edit();
 
         context = getApplicationContext();
 
@@ -100,6 +110,36 @@ public class GetPersonMeetingService extends IntentService {
     protected void onHandleIntent(Intent intent) {
 
         Log.i(TAG, "Handle");
+
+        if (alarmList != null && alarmList.size() > 0) {
+            for (PendingIntent pendingintent : alarmList) {
+                removeSysNotification(pendingintent);
+            }
+            alarmList.clear();
+        } else {
+            alarmList = new ArrayList<>();
+        }
+
+        //if calendar list is not empty, clear all events and reminders
+        if (calendarRemindersList != null && calendarRemindersList.size() > 0) {
+            for (String remindersID : calendarRemindersList) {
+                removeReminder(remindersID);
+            }
+            calendarRemindersList.clear();
+        } else {
+            calendarRemindersList = new HashSet<>();
+        }
+
+        if (calendarEventsList != null && calendarEventsList.size() > 0) {
+            for (String eventID : calendarEventsList) {
+                removeEvent2(eventID);
+            }
+            calendarEventsList.clear();
+        } else {
+            calendarEventsList = new HashSet<>();
+
+        }
+
 
 
 
@@ -194,6 +234,25 @@ public class GetPersonMeetingService extends IntentService {
     public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy()");
+
+        if (calendarEventsList.size() > 0) {
+
+            editor.putStringSet("CALENDAR_EVENTS", calendarEventsList);
+            editor.commit();
+        } else {
+            editor.putStringSet("CALENDAR_EVENTS", null);
+            editor.commit();
+        }
+
+        if (calendarRemindersList.size() > 0) {
+
+            editor.putStringSet("CALENDAR_REMINDERS", calendarRemindersList);
+            editor.commit();
+        } else {
+            editor.putStringSet("CALENDAR_REMINDERS", null);
+            editor.commit();
+        }
+
         Intent intent = new Intent(Constants.ACTION.GET_PERSONAL_MEETING_LIST_COMPLETE);
         sendBroadcast(intent);
     }
@@ -321,21 +380,47 @@ public class GetPersonMeetingService extends IntentService {
 
                             }*/
                             if (sync_option == 2) { //with calendar
-                                if (item.getBad_sp().equals("N")) {
-                                    if (updateEvent(item) == 0) {
+                                long start_time = 0;
+                                Date start_date_compare;
+
+                                try {
+                                    start_date_compare = formatter.parse(item.getStart_date());
+                                    start_time = start_date_compare.getTime();
+                                } catch (ParseException e) {
+                                    e.printStackTrace();
+                                }
+
+                                Log.e(TAG, "start time = "+start_time+", current time = "+System.currentTimeMillis());
+
+                                if (item.getBad_sp().equals("N") && (start_time - System.currentTimeMillis()) > 0) {
+                                    //if (updateEvent(item) == 0) {
                                         Log.e(TAG, "===>Add new event!");
                                         AddEvent(item);
+                                    //}
+                                } /*else { // item.getBad_sp().equals("Y")
+                                    //removeEvent(item);
+                                    if (calendarEventsList.size() > 0) {
+                                        for (String eventID : calendarEventsList) {
+                                            removeEvent2(eventID);
+                                        }
+
+                                        calendarEventsList.clear();
                                     }
-                                } else { // item.getBad_sp().equals("Y")
-                                    removeEvent(item);
-                                }
+                                }*/
                             } else if (sync_option == 1) {
                                 long time = 0;
                                 Date start_date_compare = null;
 
-                                if (MeetingAlarm.last_sync_setting == 2) {
-                                    removeEvent(item);
-                                }
+                                /*if (MeetingAlarm.last_sync_setting == 2) {
+                                    //removeEvent(item);
+                                    if (calendarEventsList.size() > 0) {
+                                        for (String eventID : calendarEventsList) {
+                                            removeEvent2(eventID);
+                                        }
+
+                                        calendarEventsList.clear();
+                                    }
+                                }*/
 
                                 try {
                                     start_date_compare = formatter.parse(item.getStart_date());
@@ -350,14 +435,21 @@ public class GetPersonMeetingService extends IntentService {
                                     if (start_date_compare != null &&
                                             item.getBad_sp().equals("N") &&
                                             start_date_compare.getTime() > System.currentTimeMillis()) {
-                                        addSysMotification(getNotification(item), time);
+                                        addSysNotification(getNotification(item), time);
                                     }
 
                                 }
                             } else {
-                                if (MeetingAlarm.last_sync_setting == 2) {
-                                    removeEvent(item);
-                                }
+                                /*if (MeetingAlarm.last_sync_setting == 2) {
+                                    //removeEvent(item);
+                                    if (calendarEventsList.size() > 0) {
+                                        for (String eventID : calendarEventsList) {
+                                            removeEvent2(eventID);
+                                        }
+
+                                        calendarEventsList.clear();
+                                    }
+                                }*/
 
                             }
 
@@ -448,11 +540,21 @@ public class GetPersonMeetingService extends IntentService {
 
     public boolean AddEvent(MeetingListItem item) {
 
-        Log.i(TAG, "AddToCalendar");
+        Log.i(TAG, "<AddEvent>");
+
+        /*
+        CalendarContract.Calendars._ID,                           // 0
+        CalendarContract.Calendars.ACCOUNT_NAME,                  // 1
+        CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,         // 2
+        CalendarContract.Calendars.OWNER_ACCOUNT,                 // 3
+        CalendarContract.Calendars.IS_PRIMARY                     // 4
+         */
+
+
         long _eventId;
 
         ContentValues values = new ContentValues();
-        long cal_Id = 1;
+        long cal_Id = 3;
         TimeZone tz = TimeZone.getDefault();
         //Calendar cal = Calendar.getInstance();
         ContentResolver cr = getContentResolver();
@@ -467,21 +569,30 @@ public class GetPersonMeetingService extends IntentService {
         }
 
         if (start_date != null) {
+            Log.d(TAG, "start time = "+start_date.getTime());
             values.put(CalendarContract.Events.DTSTART, start_date.getTime());
         } else {
             Log.e(TAG, "Can't save start time");
             return false;
         }
         if (end_date != null) {
+            Log.d(TAG, "end time = "+end_date.getTime());
             values.put(CalendarContract.Events.DTEND, end_date.getTime());
         } else {
             Log.e(TAG, "Can't save end time");
             return false;
         }
+
+        Log.d(TAG, "title = "+item.getSubject());
+        Log.d(TAG, "desc = "+item.getRoom_name());
+        Log.d(TAG, "cal_ID = "+cal_Id);
+        Log.d(TAG, "tz = "+tz.getID());
+
         values.put(CalendarContract.Events.TITLE, item.getSubject());
         values.put(CalendarContract.Events.DESCRIPTION, item.getRoom_name());
         //values.put(CalendarContract.Events.DURATION, end_date.getTime()-start_date.getTime());
         //values.put(CalendarContract.Events.CALENDAR_COLOR, Color.BLUE);
+
         values.put(CalendarContract.Events.CALENDAR_ID, cal_Id);
         values.put(CalendarContract.Events.EVENT_TIMEZONE, tz.getID());
 
@@ -500,6 +611,7 @@ public class GetPersonMeetingService extends IntentService {
             Log.e(TAG, "uri = "+uri.getLastPathSegment().toString());
             if (uri != null) {
                 _eventId = Long.parseLong(uri.getLastPathSegment());
+                calendarEventsList.add(String.valueOf(_eventId));
                 setReminder(cr, _eventId, alarm_interval);
             } else {
                 Log.e(TAG, "uri = null");
@@ -509,6 +621,8 @@ public class GetPersonMeetingService extends IntentService {
             e.printStackTrace();
             return false;
         }
+
+        Log.i(TAG, "</AddEvent>");
 
         return true;
     }
@@ -521,7 +635,9 @@ public class GetPersonMeetingService extends IntentService {
             values.put(CalendarContract.Reminders.EVENT_ID, eventID);
             values.put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT);
             try {
-                //Uri uri = cr.insert(CalendarContract.Reminders.CONTENT_URI, values);
+                Uri uri = cr.insert(CalendarContract.Reminders.CONTENT_URI, values);
+
+
                 Cursor c = CalendarContract.Reminders.query(cr, eventID,
                         new String[]{CalendarContract.Reminders.MINUTES});
                 if (c.moveToFirst()) {
@@ -529,6 +645,8 @@ public class GetPersonMeetingService extends IntentService {
                             + c.getInt(c.getColumnIndex(CalendarContract.Reminders.MINUTES)));
                 }
                 c.close();
+                if (uri.getLastPathSegment().toString().length() > 0)
+                    calendarRemindersList.add(uri.getLastPathSegment().toString());
             } catch (SecurityException e) {
                 e.printStackTrace();
             }
@@ -537,6 +655,25 @@ public class GetPersonMeetingService extends IntentService {
         }
     }
 
+    public void removeReminder(String reminderID) {
+        int iNumRowsDeleted = 0;
+        ContentResolver cr = context.getContentResolver();
+
+        Uri reminderUri = ContentUris.withAppendedId(
+                CalendarContract.Reminders.CONTENT_URI, Long.parseLong(reminderID));
+
+        if (reminderID != null) {
+
+            try {
+
+                iNumRowsDeleted = cr.delete(reminderUri, null, null);
+            } catch (SecurityException e) {
+                e.printStackTrace();
+            }
+
+            Log.i(TAG, "Deleted " + iNumRowsDeleted + " calendar entry.");
+        }
+    }
 
     // function to remove an event from the calendar using the eventId stored within the Task object.
     public void removeEvent(MeetingListItem item) {
@@ -578,6 +715,58 @@ public class GetPersonMeetingService extends IntentService {
         Log.i(TAG, "Deleted " + iNumRowsDeleted + " calendar entry.");
     }
 
+    public void removeEvent2(String eventID) {
+        int iNumRowsDeleted = 0;
+        //Date start_date=null;
+        //Date end_date=null;
+        ContentResolver cr = context.getContentResolver();
+
+        Uri baseUri;
+        if (Build.VERSION.SDK_INT >= 8) {
+            baseUri = Uri.parse("content://com.android.calendar/events");
+        } else {
+            baseUri = Uri.parse("content://calendar/events");
+        }
+
+        //Uri eventsUri = Uri.parse(CALENDAR_URI_BASE+"events");
+        Uri eventUri = ContentUris.withAppendedId(baseUri, Long.parseLong(eventID));
+        iNumRowsDeleted = cr.delete(eventUri, null, null);
+
+        Log.i(TAG, "Deleted " + iNumRowsDeleted + " calendar entry.");
+
+        /*Uri baseUri;
+        if (Build.VERSION.SDK_INT >= 8) {
+            baseUri = Uri.parse("content://com.android.calendar/events");
+        } else {
+            baseUri = Uri.parse("content://calendar/events");
+        }
+
+        try {
+            start_date = formatter.parse(item.getStart_date());
+            //end_date = formatter.parse(item.getEnd_date());
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        //String selection = "TITLE = ?"+item.getSubject();
+
+        if (start_date != null) {
+
+            try {
+                iNumRowsDeleted = cr.delete(baseUri, CalendarContract.Events.TITLE + "=? AND " +
+                                CalendarContract.Events.DTSTART + "=? AND " +
+                                CalendarContract.Events.DESCRIPTION + "=?",
+                        new String[]{item.getSubject(), String.valueOf(start_date.getTime()), item.getRoom_name()});
+            } catch (SecurityException e) {
+                e.printStackTrace();
+            }
+        } else {
+            Log.e(TAG, "Can't delete from calendar.");
+        }*/
+
+        //Log.i(TAG, "Deleted " + iNumRowsDeleted + " calendar entry.");
+    }
+
 
     public int updateEvent(MeetingListItem item) {
         int iNumRowsUpdated = 0;
@@ -609,16 +798,18 @@ public class GetPersonMeetingService extends IntentService {
         //String[] vec = new String[] { "calendar_id", "title", "description", "dtstart", "dtend", "allDay", "eventLocation" };
 
         ContentValues cv = new ContentValues();
-        cv.put("title", item.getSubject()); //These Fields should be your String values of actual column names
-        cv.put("description", item.getRoom_name());
+        cv.put(CalendarContract.Events.TITLE, item.getSubject()); //These Fields should be your String values of actual column names
+        cv.put(CalendarContract.Events.DESCRIPTION, item.getRoom_name());
         if (start_date != null) {
-            cv.put("dtstart", start_date.getTime());
+            cv.put(CalendarContract.Events.DTSTART, start_date.getTime());
         }
+
         if (end_date != null) {
-            cv.put("dtend", end_date.getTime());
-
+            cv.put(CalendarContract.Events.DTEND, end_date.getTime());
 
         }
+
+
 
 
 
@@ -630,7 +821,8 @@ public class GetPersonMeetingService extends IntentService {
                 iNumRowsUpdated = cr.update(baseUri, cv, CalendarContract.Events.TITLE + "=? AND " + CalendarContract.Events.DTSTART + "=?",
                         new String[]{item.getSubject(), String.valueOf(start_date.getTime())});
             //} catch (SecurityException e) {
-            } catch (SQLiteException e) {
+            //} catch (SQLiteException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
@@ -643,15 +835,21 @@ public class GetPersonMeetingService extends IntentService {
         return iNumRowsUpdated;
     }
 
+
+
     private Notification getNotification(MeetingListItem item) {
 
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
         Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
+        String split[] = item.getStart_date().split(" ");
+        String date = split[1].substring(0, split[1].length() - 3);
+
         builder.setSmallIcon(R.mipmap.ic_launcher)
                 //.setWhen(System.currentTimeMillis())
                 .setContentTitle(item.getSubject())
+                .setSubText(date)
                 //.setContentText(jid_split[0] + " send you an image" + fileTransferRequest.getFileName())
                 .setContentText(item.getRoom_name())
                 //.setContentIntent(pendingIntent)
@@ -665,13 +863,13 @@ public class GetPersonMeetingService extends IntentService {
         //return null;
     }
 
-    public void addSysMotification(Notification notification, long time) {
+    public void addSysNotification(Notification notification, long time) {
 
         DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
         Date netDate = (new Date(time));
         //return sdf.format(netDate);
 
-        Log.i(TAG, "addSysMotification: " + sdf.format(netDate));
+       // Log.i(TAG, "addSysNotification: " + sdf.format(netDate));
 
 
         Intent myintent = new Intent(this, NotificationPublisher.class);
@@ -680,13 +878,24 @@ public class GetPersonMeetingService extends IntentService {
 
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, (int) System.currentTimeMillis(), myintent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        Log.d(TAG, "<remove pendingIntent> "+ pendingIntent.toString());
+        Log.d(TAG, "<add pendingIntent> "+ pendingIntent.toString());
 
         InitData.add(pendingIntent);
 
-        long futureInMillis = time;
-        //long futureInMillis = System.currentTimeMillis() + delay_time;
+
+        //long futureInMillis = time;
+        //long futureInMillis = System.currentTimeMillis() + 30000;
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        alarmManager.set(AlarmManager.RTC_WAKEUP, futureInMillis, pendingIntent);
+        //alarmManager.set(AlarmManager.RTC_WAKEUP, futureInMillis, pendingIntent);
+        alarmManager.set(AlarmManager.RTC_WAKEUP, time, pendingIntent);
+
+    }
+
+    public void removeSysNotification(PendingIntent pendingIntent) {
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        alarmManager.cancel(pendingIntent);
+
     }
 }

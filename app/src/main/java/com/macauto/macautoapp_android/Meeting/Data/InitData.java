@@ -4,22 +4,33 @@ package com.macauto.macautoapp_android.Meeting.Data;
 import android.app.PendingIntent;
 
 
+import android.content.Context;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class InitData {
     private static final String TAG = InitData.class.getName();
-    private static ArrayList<PendingIntent> alarmList = new ArrayList<>();
+    public static ArrayList<PendingIntent> alarmList = new ArrayList<>();
 
+    public static Set<String> calendarEventsList = new HashSet<>();
+    public static Set<String> calendarRemindersList = new HashSet<>();
 
+    private Context context;
 
+    public InitData(Context context) {
+        super();
+        this.context = context;
+    }
 
 
     public static void init() {
         Log.e(TAG, "=== InitData init ===");
-        alarmList.clear();
 
+        alarmList.clear();
+        calendarEventsList.clear();
 
     }
 
@@ -39,4 +50,21 @@ public class InitData {
     public static PendingIntent get(int index) {
         return alarmList.get(index);
     }
+
+    /*public static void calendarEventsClear() {
+        Log.d(TAG, "calendarEventsClear");
+        calendarEvetsList.clear();
+    }
+
+    public static void canlendarEventAdd(String eventId) {
+        calendarEvetsList.add(eventId);
+    }
+
+    public static void canlendarEventRemove(String eventId) {
+        calendarEvetsList.remove(eventId);
+    }
+
+    public static void canlendarEventAddAll(Set<String> Sets) {
+        calendarEvetsList = new HashSet<>(Sets);
+    }*/
 }

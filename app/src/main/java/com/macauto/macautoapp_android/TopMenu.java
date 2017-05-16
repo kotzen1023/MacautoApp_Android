@@ -3,6 +3,7 @@ package com.macauto.macautoapp_android;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -22,6 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+
 import com.macauto.macautoapp_android.Meeting.Data.InitData;
 import com.macauto.macautoapp_android.Meeting.Login;
 
@@ -32,11 +34,16 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import static com.macauto.macautoapp_android.Meeting.Data.InitData.calendarEventsList;
+import static com.macauto.macautoapp_android.Meeting.Data.InitData.calendarRemindersList;
+import static com.macauto.macautoapp_android.Meeting.Data.InitData.alarmList;
 
 
 public class TopMenu extends Activity {
@@ -47,11 +54,22 @@ public class TopMenu extends Activity {
     static SharedPreferences.Editor editor;
     private static final String FILE_NAME = "Preference";
     //private  String saveEncryptKey="";
-    private boolean is_initData = false;
+    //private boolean is_initData = false;
+
+    //public static Set<String> calendarEvetsList = new HashSet<>();
+
+    private Context context;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.top_menu);
+
+        context = getBaseContext();
+
+        pref = getSharedPreferences(FILE_NAME, MODE_PRIVATE);
+        calendarEventsList = pref.getStringSet("CALENDAR_EVENTS", null);
+        calendarRemindersList = pref.getStringSet("CALENDAR_REMINDERS", null);
 
         Window window = getWindow();
 
@@ -169,10 +187,10 @@ public class TopMenu extends Activity {
             // carry on the normal flow, as the case of  permissions  granted.
         }
 
-        if (!is_initData) {
+        /*if (!is_initData) {
             InitData data = new InitData();
             is_initData = true;
-        }
+        }*/
         //init files
         //FileOperation.init_folder_and_files();
     }
